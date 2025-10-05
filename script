@@ -1,4 +1,4 @@
---// Autofarm GUI Script mit Startanzeige ("25% Brain")
+--// Autofarm GUI Script mit Startanzeige und Start-Button
 --// LocalScript in StarterPlayer -> StarterPlayerScripts einfügen
 
 local player = game.Players.LocalPlayer
@@ -9,7 +9,9 @@ ScreenGui.Name = "AutoFarmUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = playerGui
 
--- Startanzeige ("25% Brain")
+--------------------------------------------------
+-- STARTTEXT ("25% Brain")
+--------------------------------------------------
 local StartLabel = Instance.new("TextLabel")
 StartLabel.Size = UDim2.new(0, 300, 0, 80)
 StartLabel.Position = UDim2.new(0.5, -150, 0.5, -40)
@@ -20,27 +22,25 @@ StartLabel.TextScaled = true
 StartLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 StartLabel.Parent = ScreenGui
 
--- Sanfte Einblendung
+-- Einblenden
 StartLabel.TextTransparency = 1
 for i = 1, 20 do
 	StartLabel.TextTransparency = 1 - (i / 20)
 	task.wait(0.05)
 end
 
--- 5 Sekunden anzeigen
 task.wait(5)
 
--- Sanft ausblenden
+-- Ausblenden
 for i = 1, 20 do
 	StartLabel.TextTransparency = i / 20
 	task.wait(0.05)
 end
 StartLabel:Destroy()
 
--- Nun das eigentliche GUI laden:
 --------------------------------------------------
-
--- Farm Button (links)
+-- GUI ERSTELLEN
+--------------------------------------------------
 local FarmButton = Instance.new("TextButton")
 FarmButton.Size = UDim2.new(0, 120, 0, 40)
 FarmButton.Position = UDim2.new(0, 20, 0.5, -20)
@@ -53,10 +53,9 @@ FarmButton.Parent = ScreenGui
 FarmButton.Active = true
 FarmButton.Draggable = true
 
--- Rechtes Panel
 local RightFrame = Instance.new("Frame")
-RightFrame.Size = UDim2.new(0, 200, 0, 180)
-RightFrame.Position = UDim2.new(1, -220, 0.5, -90)
+RightFrame.Size = UDim2.new(0, 200, 0, 230)
+RightFrame.Position = UDim2.new(1, -220, 0.5, -115)
 RightFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 RightFrame.Visible = true
 RightFrame.Parent = ScreenGui
@@ -65,7 +64,6 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = RightFrame
 
--- Titel
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
@@ -75,7 +73,7 @@ Title.TextScaled = true
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Parent = RightFrame
 
--- X-Button zum Schließen
+-- X-Button
 local CloseButton = Instance.new("TextButton")
 CloseButton.Size = UDim2.new(0, 30, 0, 30)
 CloseButton.Position = UDim2.new(1, -35, 0, 5)
@@ -94,7 +92,11 @@ CloseButton.MouseButton1Click:Connect(function()
 	RightFrame.Visible = false
 end)
 
--- Funktion zum Erstellen eines Toggles
+--------------------------------------------------
+-- TOGGLE-FUNKTION
+--------------------------------------------------
+local toggles = {}
+
 local function createToggle(name, position)
 	local frame = Instance.new("Frame")
 	frame.Size = UDim2.new(1, -20, 0, 40)
@@ -122,29 +124,79 @@ local function createToggle(name, position)
 	toggle.Parent = frame
 
 	local state = false
+	toggles[name] = false
 
 	toggle.MouseButton1Click:Connect(function()
 		state = not state
+		toggles[name] = state
 		if state then
 			toggle.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
 			toggle.Text = "ON"
-			print(name .. " Autofarm aktiviert")
-			-- HIER deine Autofarm-Logik starten
 		else
 			toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 			toggle.Text = "OFF"
-			print(name .. " Autofarm deaktiviert")
-			-- HIER deine Autofarm-Logik stoppen
 		end
 	end)
 end
 
--- Toggles hinzufügen
 createToggle("Chest", 50)
 createToggle("Coin", 100)
 createToggle("Coins", 150)
 
--- FarmButton öffnet/schließt das Panel
+--------------------------------------------------
+-- START BUTTON
+--------------------------------------------------
+local StartButton = Instance.new("TextButton")
+StartButton.Size = UDim2.new(0.8, 0, 0, 40)
+StartButton.Position = UDim2.new(0.1, 0, 0, 190)
+StartButton.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+StartButton.Text = "Start Autofarm"
+StartButton.Font = Enum.Font.GothamBold
+StartButton.TextScaled = true
+StartButton.TextColor3 = Color3.fromRGB(255,255,255)
+StartButton.Parent = RightFrame
+
+local StartCorner = Instance.new("UICorner")
+StartCorner.CornerRadius = UDim.new(0, 8)
+StartCorner.Parent = StartButton
+
+--------------------------------------------------
+-- AUTO-FARM LOGIK STARTEN
+--------------------------------------------------
+local running = false
+
+StartButton.MouseButton1Click:Connect(function()
+	if running then
+		running = false
+		StartButton.Text = "Start Autofarm"
+		StartButton.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+		print("Autofarm gestoppt")
+	else
+		running = true
+		StartButton.Text = "Stop Autofarm"
+		StartButton.BackgroundColor3 = Color3.fromRGB(200, 100, 50)
+		print("Autofarm gestartet")
+
+		task.spawn(function()
+			while running do
+				if toggles["Chest"] then
+					print("Farming Chests ...")
+					-- HIER DEINE CHEST FARM LOGIK
+				end
+				if toggles["Coin"] then
+					print("Farming Coin ...")
+					-- HIER DEINE COIN FARM LOGIK
+				end
+				if toggles["Coins"] then
+					print("Farming Coins ...")
+					-- HIER DEINE COINS FARM LOGIK
+				end
+				task.wait(2) -- Intervall
+			end
+		end)
+	end
+end)
+
 FarmButton.MouseButton1Click:Connect(function()
 	RightFrame.Visible = not RightFrame.Visible
 end)

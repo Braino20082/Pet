@@ -1,1 +1,118 @@
+--// Autofarm GUI Script mit X-Button
+--// LocalScript in StarterPlayer -> StarterPlayerScripts einfügen
 
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AutoFarmUI"
+ScreenGui.Parent = playerGui
+
+-- Farm Button (links)
+local FarmButton = Instance.new("TextButton")
+FarmButton.Size = UDim2.new(0, 120, 0, 40)
+FarmButton.Position = UDim2.new(0, 20, 0.5, -20)
+FarmButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+FarmButton.Text = "Farm"
+FarmButton.TextScaled = true
+FarmButton.Font = Enum.Font.GothamBold
+FarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FarmButton.Parent = ScreenGui
+FarmButton.Active = true
+FarmButton.Draggable = true
+
+-- Rechtes Panel
+local RightFrame = Instance.new("Frame")
+RightFrame.Size = UDim2.new(0, 200, 0, 180)
+RightFrame.Position = UDim2.new(1, -220, 0.5, -90)
+RightFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+RightFrame.Visible = false
+RightFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = RightFrame
+
+-- Titel
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundTransparency = 1
+Title.Text = "Autofarm"
+Title.Font = Enum.Font.GothamBold
+Title.TextScaled = true
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Parent = RightFrame
+
+-- X-Button zum Schließen
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.Text = "X"
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextScaled = true
+CloseButton.TextColor3 = Color3.fromRGB(255,255,255)
+CloseButton.Parent = RightFrame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseButton
+
+CloseButton.MouseButton1Click:Connect(function()
+	RightFrame.Visible = false
+end)
+
+-- Funktion zum Erstellen eines Toggles
+local function createToggle(name, position)
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(1, -20, 0, 40)
+	frame.Position = UDim2.new(0, 10, 0, position)
+	frame.BackgroundTransparency = 1
+	frame.Parent = RightFrame
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0.7, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.Text = name
+	label.Font = Enum.Font.Gotham
+	label.TextScaled = true
+	label.TextColor3 = Color3.fromRGB(255,255,255)
+	label.Parent = frame
+
+	local toggle = Instance.new("TextButton")
+	toggle.Size = UDim2.new(0.25, 0, 0.8, 0)
+	toggle.Position = UDim2.new(0.72, 0, 0.1, 0)
+	toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	toggle.Text = "OFF"
+	toggle.Font = Enum.Font.GothamBold
+	toggle.TextScaled = true
+	toggle.TextColor3 = Color3.fromRGB(255,255,255)
+	toggle.Parent = frame
+
+	local state = false
+
+	toggle.MouseButton1Click:Connect(function()
+		state = not state
+		if state then
+			toggle.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+			toggle.Text = "ON"
+			print(name .. " Autofarm aktiviert")
+			-- HIER deine Autofarm-Logik starten
+		else
+			toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+			toggle.Text = "OFF"
+			print(name .. " Autofarm deaktiviert")
+			-- HIER deine Autofarm-Logik stoppen
+		end
+	end)
+end
+
+-- Toggles hinzufügen
+createToggle("Chest", 50)
+createToggle("Coin", 100)
+createToggle("Coins", 150)
+
+-- Öffnen / Schließen
+FarmButton.MouseButton1Click:Connect(function()
+	RightFrame.Visible = not RightFrame.Visible
+end)

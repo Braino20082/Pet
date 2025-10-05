@@ -142,6 +142,44 @@ local function activatePetsOnTarget(target)
     end
 end
 
+-- Function to make pets attack target
+local function makePetsAttack(target)
+    if not target then return end
+    
+    -- Suche nach Pets im Workspace
+    local pets = {}
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v.Name:find("Pet") and v:FindFirstChild(Player.Name) then
+            table.insert(pets, v)
+        end
+    end
+    
+    -- Aktiviere Pets auf das Target
+    for _, pet in pairs(pets) do
+        spawn(function()
+            local petRoot = pet:FindFirstChild("HumanoidRootPart") or pet:FindFirstChildWhichIsA("BasePart")
+            if petRoot then
+                -- Teleportiere Pet zum Target
+                petRoot.CFrame = target.CFrame
+            end
+        end)
+    end
+    
+    -- Remote Events für Pet-Attacken
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    for _, v in pairs(ReplicatedStorage:GetDescendants()) do
+        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+            if v.Name:lower():find("pet") or v.Name:lower():find("attack") or v.Name:lower():find("damage") then
+                pcall(function()
+                    v:FireServer(target)
+                    v:FireServer({Target = target})
+                    v:FireServer("Attack", target)
+                end)
+            end
+        end
+    end
+end
+
 -- Function to auto-click while near target
 local function autoClickNearTarget(target, duration)
     local startTime = tick()
@@ -150,6 +188,9 @@ local function autoClickNearTarget(target, duration)
         
         -- Kontinuierliches Klicken
         activatePetsOnTarget(target)
+        
+        -- Pets sollen DPS machen
+        makePetsAttack(target)
         
         -- Simuliere Mausklicks
         local mouse = Player:GetMouse()

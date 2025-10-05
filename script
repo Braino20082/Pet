@@ -1,202 +1,147 @@
---// Autofarm GUI Script mit Startanzeige und Start-Button
---// LocalScript in StarterPlayer -> StarterPlayerScripts einfügen
-
-local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
+-- Pet Simulator X Autofarm Script
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AutoFarmUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = playerGui
-
---------------------------------------------------
--- STARTTEXT ("25% Brain")
---------------------------------------------------
-local StartLabel = Instance.new("TextLabel")
-StartLabel.Size = UDim2.new(0, 300, 0, 80)
-StartLabel.Position = UDim2.new(0.5, -150, 0.5, -40)
-StartLabel.BackgroundTransparency = 1
-StartLabel.Text = "25% Brain"
-StartLabel.Font = Enum.Font.GothamBold
-StartLabel.TextScaled = true
-StartLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-StartLabel.Parent = ScreenGui
-
--- Einblenden
-StartLabel.TextTransparency = 1
-for i = 1, 20 do
-	StartLabel.TextTransparency = 1 - (i / 20)
-	task.wait(0.05)
-end
-
-task.wait(5)
-
--- Ausblenden
-for i = 1, 20 do
-	StartLabel.TextTransparency = i / 20
-	task.wait(0.05)
-end
-StartLabel:Destroy()
-
---------------------------------------------------
--- GUI ERSTELLEN
---------------------------------------------------
-local FarmButton = Instance.new("TextButton")
-FarmButton.Size = UDim2.new(0, 120, 0, 40)
-FarmButton.Position = UDim2.new(0, 20, 0.5, -20)
-FarmButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
-FarmButton.Text = "Farm"
-FarmButton.TextScaled = true
-FarmButton.Font = Enum.Font.GothamBold
-FarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-FarmButton.Parent = ScreenGui
-FarmButton.Active = true
-FarmButton.Draggable = true
-
-local RightFrame = Instance.new("Frame")
-RightFrame.Size = UDim2.new(0, 200, 0, 230)
-RightFrame.Position = UDim2.new(1, -220, 0.5, -115)
-RightFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-RightFrame.Visible = true
-RightFrame.Parent = ScreenGui
-
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = RightFrame
-
+local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundTransparency = 1
-Title.Text = "Autofarm"
-Title.Font = Enum.Font.GothamBold
-Title.TextScaled = true
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Parent = RightFrame
-
--- X-Button
+local ScrollFrame = Instance.new("ScrollingFrame")
+local UIListLayout = Instance.new("UIListLayout")
 local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -35, 0, 5)
-CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-CloseButton.Text = "X"
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.TextScaled = true
-CloseButton.TextColor3 = Color3.fromRGB(255,255,255)
-CloseButton.Parent = RightFrame
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 8)
-CloseCorner.Parent = CloseButton
+-- Autofarm Status
+local farmingChests = false
+local farmingCoins = false
+
+-- GUI Setup
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "PSXAutofarm"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main Frame
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+-- Title
+Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+Title.BorderSizePixel = 0
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "Pet Simulator X - Autofarm"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 18
+
+-- Close Button (X)
+CloseButton.Parent = MainFrame
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.BorderSizePixel = 0
+CloseButton.Position = UDim2.new(1, -35, 0, 5)
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 18
 
 CloseButton.MouseButton1Click:Connect(function()
-	RightFrame.Visible = false
+    ScreenGui:Destroy()
+    farmingChests = false
+    farmingCoins = false
 end)
 
---------------------------------------------------
--- TOGGLE-FUNKTION
---------------------------------------------------
-local toggles = {}
+-- Scroll Frame
+ScrollFrame.Parent = MainFrame
+ScrollFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+ScrollFrame.BorderSizePixel = 0
+ScrollFrame.Position = UDim2.new(0, 10, 0, 50)
+ScrollFrame.Size = UDim2.new(1, -20, 1, -60)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollFrame.ScrollBarThickness = 6
 
-local function createToggle(name, position)
-	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(1, -20, 0, 40)
-	frame.Position = UDim2.new(0, 10, 0, position)
-	frame.BackgroundTransparency = 1
-	frame.Parent = RightFrame
+-- UI List Layout
+UIListLayout.Parent = ScrollFrame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 5)
 
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(0.7, 0, 1, 0)
-	label.BackgroundTransparency = 1
-	label.Text = name
-	label.Font = Enum.Font.Gotham
-	label.TextScaled = true
-	label.TextColor3 = Color3.fromRGB(255,255,255)
-	label.Parent = frame
-
-	local toggle = Instance.new("TextButton")
-	toggle.Size = UDim2.new(0.25, 0, 0.8, 0)
-	toggle.Position = UDim2.new(0.72, 0, 0.1, 0)
-	toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-	toggle.Text = "OFF"
-	toggle.Font = Enum.Font.GothamBold
-	toggle.TextScaled = true
-	toggle.TextColor3 = Color3.fromRGB(255,255,255)
-	toggle.Parent = frame
-
-	local state = false
-	toggles[name] = false
-
-	toggle.MouseButton1Click:Connect(function()
-		state = not state
-		toggles[name] = state
-		if state then
-			toggle.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
-			toggle.Text = "ON"
-		else
-			toggle.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-			toggle.Text = "OFF"
-		end
-	end)
+-- Function to create farm option
+local function createFarmOption(name, callback)
+    local OptionFrame = Instance.new("Frame")
+    local OptionLabel = Instance.new("TextLabel")
+    local ToggleButton = Instance.new("TextButton")
+    
+    OptionFrame.Parent = ScrollFrame
+    OptionFrame.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
+    OptionFrame.BorderSizePixel = 0
+    OptionFrame.Size = UDim2.new(1, -10, 0, 50)
+    
+    OptionLabel.Parent = OptionFrame
+    OptionLabel.BackgroundTransparency = 1
+    OptionLabel.Position = UDim2.new(0, 10, 0, 0)
+    OptionLabel.Size = UDim2.new(0.5, -10, 1, 0)
+    OptionLabel.Font = Enum.Font.Gotham
+    OptionLabel.Text = name
+    OptionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    OptionLabel.TextSize = 16
+    OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    ToggleButton.Parent = OptionFrame
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    ToggleButton.BorderSizePixel = 0
+    ToggleButton.Position = UDim2.new(0.6, 0, 0.2, 0)
+    ToggleButton.Size = UDim2.new(0.35, 0, 0.6, 0)
+    ToggleButton.Font = Enum.Font.GothamBold
+    ToggleButton.Text = "OFF"
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.TextSize = 14
+    
+    local isActive = false
+    
+    ToggleButton.MouseButton1Click:Connect(function()
+        isActive = not isActive
+        if isActive then
+            ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+            ToggleButton.Text = "ON"
+        else
+            ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+            ToggleButton.Text = "OFF"
+        end
+        callback(isActive)
+    end)
+    
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
 end
 
-createToggle("Chest", 50)
-createToggle("Coin", 100)
-createToggle("Coins", 150)
+-- Farm Functions
+local function farmChests(active)
+    farmingChests = active
+    spawn(function()
+        while farmingChests do
+            -- Hier deine Chest-Farm-Logik
+            print("Farming Chests...")
+            wait(1)
+        end
+    end)
+end
 
---------------------------------------------------
--- START BUTTON
---------------------------------------------------
-local StartButton = Instance.new("TextButton")
-StartButton.Size = UDim2.new(0.8, 0, 0, 40)
-StartButton.Position = UDim2.new(0.1, 0, 0, 190)
-StartButton.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
-StartButton.Text = "Start Autofarm"
-StartButton.Font = Enum.Font.GothamBold
-StartButton.TextScaled = true
-StartButton.TextColor3 = Color3.fromRGB(255,255,255)
-StartButton.Parent = RightFrame
+local function farmCoins(active)
+    farmingCoins = active
+    spawn(function()
+        while farmingCoins do
+            -- Hier deine Coin-Farm-Logik
+            print("Farming Coins...")
+            wait(1)
+        end
+    end)
+end
 
-local StartCorner = Instance.new("UICorner")
-StartCorner.CornerRadius = UDim.new(0, 8)
-StartCorner.Parent = StartButton
-
---------------------------------------------------
--- AUTO-FARM LOGIK STARTEN
---------------------------------------------------
-local running = false
-
-StartButton.MouseButton1Click:Connect(function()
-	if running then
-		running = false
-		StartButton.Text = "Start Autofarm"
-		StartButton.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
-		print("Autofarm gestoppt")
-	else
-		running = true
-		StartButton.Text = "Stop Autofarm"
-		StartButton.BackgroundColor3 = Color3.fromRGB(200, 100, 50)
-		print("Autofarm gestartet")
-
-		task.spawn(function()
-			while running do
-				if toggles["Chest"] then
-					print("Farming Chests ...")
-					-- HIER DEINE CHEST FARM LOGIK
-				end
-				if toggles["Coin"] then
-					print("Farming Coin ...")
-					-- HIER DEINE COIN FARM LOGIK
-				end
-				if toggles["Coins"] then
-					print("Farming Coins ...")
-					-- HIER DEINE COINS FARM LOGIK
-				end
-				task.wait(2) -- Intervall
-			end
-		end)
-	end
+-- Create Farm Options
+createFarmOption("Farm", function(active)
+    print("Main Farm: " .. tostring(active))
 end)
 
-FarmButton.MouseButton1Click:Connect(function()
-	RightFrame.Visible = not RightFrame.Visible
-end)
+createFarmOption("Chest", farmChests)
+createFarmOption("Coins", farmCoins)
+
+print("Pet Simulator X Autofarm loaded!")

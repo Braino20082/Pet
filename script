@@ -7,8 +7,15 @@ local UIListLayout = Instance.new("UIListLayout")
 local CloseButton = Instance.new("TextButton")
 
 -- Autofarm Status
+local farmingActive = false
 local farmingChests = false
 local farmingCoins = false
+
+-- Services
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
 -- GUI Setup
 ScreenGui.Parent = game.CoreGui
@@ -47,6 +54,7 @@ CloseButton.TextSize = 18
 
 CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
+    farmingActive = false
     farmingChests = false
     farmingCoins = false
 end)
@@ -64,6 +72,138 @@ ScrollFrame.ScrollBarThickness = 6
 UIListLayout.Parent = ScrollFrame
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayout.Padding = UDim.new(0, 5)
+
+-- Function to find coins in workspace
+local function findCoins()
+    local coins = {}
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "Coin" or v.Name == "Coins" or (v:IsA("Model") and v:FindFirstChild("Coin")) then
+            if v:FindFirstChild("HumanoidRootPart") or v:IsA("BasePart") then
+                table.insert(coins, v)
+            end
+        end
+    end
+    return coins
+end
+
+-- Function to find chests in workspace
+local function findChests()
+    local chests = {}
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name:lower():find("chest") and (v:IsA("Model") or v:IsA("BasePart")) then
+            table.insert(chests, v)
+        end
+    end
+    return chests
+end
+
+-- Function to teleport to target
+local function teleportTo(target)
+    if not target then return end
+    
+    local targetPos
+    if target:IsA("Model") then
+        targetPos = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChildWhichIsA("BasePart")
+    else
+        targetPos = target
+    end
+    
+    if targetPos and Character and HumanoidRootPart then
+        HumanoidRootPart.CFrame = targetPos.CFrame + Vector3.new(0, 5, 0)
+    end
+end
+
+-- Function to activate pets on target
+local function activatePetsOnTarget(target)
+    -- Simuliert das Klicken auf das Target mit Pets
+    if target then
+        local clickDetector = target:FindFirstChildOfClass("ClickDetector")
+        if clickDetector then
+            fireclickdetector(clickDetector)
+        end
+    end
+end
+
+-- Main Farm Function
+local function startMainFarm(active)
+    farmingActive = active
+    spawn(function()
+        while farmingActive do
+            local coins = findCoins()
+            
+            if #coins > 0 then
+                for _, coin in pairs(coins) do
+                    if not farmingActive then break end
+                    
+                    -- Teleport zum Coin
+                    teleportTo(coin)
+                    wait(0.5)
+                    
+                    -- Aktiviere Pets auf dem Coin
+                    activatePetsOnTarget(coin)
+                    wait(2)
+                end
+            else
+                print("Keine Coins gefunden, warte...")
+                wait(3)
+            end
+            
+            wait(1)
+        end
+    end)
+end
+
+-- Farm Chests Function
+local function farmChestsFunc(active)
+    farmingChests = active
+    spawn(function()
+        while farmingChests do
+            local chests = findChests()
+            
+            if #chests > 0 then
+                for _, chest in pairs(chests) do
+                    if not farmingChests then break end
+                    
+                    teleportTo(chest)
+                    wait(0.5)
+                    activatePetsOnTarget(chest)
+                    wait(2)
+                end
+            else
+                print("Keine Chests gefunden, warte...")
+                wait(3)
+            end
+            
+            wait(1)
+        end
+    end)
+end
+
+-- Farm Coins Function
+local function farmCoinsFunc(active)
+    farmingCoins = active
+    spawn(function()
+        while farmingCoins do
+            local coins = findCoins()
+            
+            if #coins > 0 then
+                for _, coin in pairs(coins) do
+                    if not farmingCoins then break end
+                    
+                    teleportTo(coin)
+                    wait(0.5)
+                    activatePetsOnTarget(coin)
+                    wait(1)
+                end
+            else
+                print("Keine Coins gefunden, warte...")
+                wait(3)
+            end
+            
+            wait(0.5)
+        end
+    end)
+end
 
 -- Function to create farm option
 local function createFarmOption(name, callback)
@@ -113,35 +253,15 @@ local function createFarmOption(name, callback)
     ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
 end
 
--- Farm Functions
-local function farmChests(active)
-    farmingChests = active
-    spawn(function()
-        while farmingChests do
-            -- Hier deine Chest-Farm-Logik
-            print("Farming Chests...")
-            wait(1)
-        end
-    end)
-end
-
-local function farmCoins(active)
-    farmingCoins = active
-    spawn(function()
-        while farmingCoins do
-            -- Hier deine Coin-Farm-Logik
-            print("Farming Coins...")
-            wait(1)
-        end
-    end)
-end
-
 -- Create Farm Options
-createFarmOption("Farm", function(active)
-    print("Main Farm: " .. tostring(active))
-end)
+createFarmOption("Farm", startMainFarm)
+createFarmOption("Chest", farmChestsFunc)
+createFarmOption("Coins", farmCoinsFunc)
 
-createFarmOption("Chest", farmChests)
-createFarmOption("Coins", farmCoins)
+-- Update character reference when respawning
+Player.CharacterAdded:Connect(function(char)
+    Character = char
+    HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
+end)
 
 print("Pet Simulator X Autofarm loaded!")

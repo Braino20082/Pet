@@ -121,10 +121,43 @@ end
 local function activatePetsOnTarget(target)
     -- Simuliert das Klicken auf das Target mit Pets
     if target then
-        local clickDetector = target:FindFirstChildOfClass("ClickDetector")
+        -- Versuche ClickDetector zu finden und zu aktivieren
+        local clickDetector = target:FindFirstChildOfClass("ClickDetector", true)
         if clickDetector then
             fireclickdetector(clickDetector)
         end
+        
+        -- Suche auch in Child-Objekten
+        for _, child in pairs(target:GetDescendants()) do
+            if child:IsA("ClickDetector") then
+                fireclickdetector(child)
+            end
+        end
+        
+        -- Versuche ProximityPrompt zu aktivieren
+        local proximityPrompt = target:FindFirstChildOfClass("ProximityPrompt", true)
+        if proximityPrompt then
+            fireproximityprompt(proximityPrompt)
+        end
+    end
+end
+
+-- Function to auto-click while near target
+local function autoClickNearTarget(target, duration)
+    local startTime = tick()
+    while tick() - startTime < duration do
+        if not farmingActive and not farmingChests and not farmingCoins then break end
+        
+        -- Kontinuierliches Klicken
+        activatePetsOnTarget(target)
+        
+        -- Simuliere Mausklicks
+        local mouse = Player:GetMouse()
+        if mouse then
+            mouse1click()
+        end
+        
+        wait(0.1)
     end
 end
 
@@ -141,18 +174,17 @@ local function startMainFarm(active)
                     
                     -- Teleport zum Coin
                     teleportTo(coin)
-                    wait(0.5)
+                    wait(0.3)
                     
-                    -- Aktiviere Pets auf dem Coin
-                    activatePetsOnTarget(coin)
-                    wait(2)
+                    -- Auto-Click für 3 Sekunden während wir auf dem Coin stehen
+                    autoClickNearTarget(coin, 3)
                 end
             else
                 print("Keine Coins gefunden, warte...")
                 wait(3)
             end
             
-            wait(1)
+            wait(0.5)
         end
     end)
 end
@@ -169,16 +201,17 @@ local function farmChestsFunc(active)
                     if not farmingChests then break end
                     
                     teleportTo(chest)
-                    wait(0.5)
-                    activatePetsOnTarget(chest)
-                    wait(2)
+                    wait(0.3)
+                    
+                    -- Auto-Click für 4 Sekunden auf Chest
+                    autoClickNearTarget(chest, 4)
                 end
             else
                 print("Keine Chests gefunden, warte...")
                 wait(3)
             end
             
-            wait(1)
+            wait(0.5)
         end
     end)
 end
@@ -195,16 +228,17 @@ local function farmCoinsFunc(active)
                     if not farmingCoins then break end
                     
                     teleportTo(coin)
-                    wait(0.5)
-                    activatePetsOnTarget(coin)
-                    wait(1)
+                    wait(0.3)
+                    
+                    -- Auto-Click für 2 Sekunden auf Coin
+                    autoClickNearTarget(coin, 2)
                 end
             else
                 print("Keine Coins gefunden, warte...")
                 wait(3)
             end
             
-            wait(0.5)
+            wait(0.3)
         end
     end)
 end

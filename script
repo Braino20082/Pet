@@ -1,4 +1,4 @@
---// Autofarm GUI Script mit X-Button (GUI sofort sichtbar)
+--// Autofarm GUI Script mit Startanzeige ("25% Brain")
 --// LocalScript in StarterPlayer -> StarterPlayerScripts einfügen
 
 local player = game.Players.LocalPlayer
@@ -8,6 +8,37 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AutoFarmUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = playerGui
+
+-- Startanzeige ("25% Brain")
+local StartLabel = Instance.new("TextLabel")
+StartLabel.Size = UDim2.new(0, 300, 0, 80)
+StartLabel.Position = UDim2.new(0.5, -150, 0.5, -40)
+StartLabel.BackgroundTransparency = 1
+StartLabel.Text = "25% Brain"
+StartLabel.Font = Enum.Font.GothamBold
+StartLabel.TextScaled = true
+StartLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StartLabel.Parent = ScreenGui
+
+-- Sanfte Einblendung
+StartLabel.TextTransparency = 1
+for i = 1, 20 do
+	StartLabel.TextTransparency = 1 - (i / 20)
+	task.wait(0.05)
+end
+
+-- 5 Sekunden anzeigen
+task.wait(5)
+
+-- Sanft ausblenden
+for i = 1, 20 do
+	StartLabel.TextTransparency = i / 20
+	task.wait(0.05)
+end
+StartLabel:Destroy()
+
+-- Nun das eigentliche GUI laden:
+--------------------------------------------------
 
 -- Farm Button (links)
 local FarmButton = Instance.new("TextButton")
@@ -27,7 +58,7 @@ local RightFrame = Instance.new("Frame")
 RightFrame.Size = UDim2.new(0, 200, 0, 180)
 RightFrame.Position = UDim2.new(1, -220, 0.5, -90)
 RightFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-RightFrame.Visible = true -- GUI ist direkt sichtbar
+RightFrame.Visible = true
 RightFrame.Parent = ScreenGui
 
 local UICorner = Instance.new("UICorner")
